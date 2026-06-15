@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Parking - Panou de Administrare</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f3f4f6; } 
+    </style>
+</head>
+<body class="text-gray-800 font-sans min-h-screen">
+    
+    <nav class="bg-white border-b border-gray-200 p-4 shadow-sm">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="bg-blue-600 text-white font-bold py-1 px-3 rounded text-xl">P</div>
+                <h1 class="text-xl font-bold text-gray-800">Smart Parking Admin</h1>
+            </div>
+            <a href="/" class="text-sm bg-gray-100 border border-gray-300 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md transition font-medium">Înapoi la Portal</a>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-6 space-y-6 max-w-7xl">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center items-center">
+                <span class="text-gray-500 font-semibold uppercase text-xs tracking-wider">Total Autorizații Active</span>
+                <span class="block text-5xl font-extrabold text-blue-600 mt-2">{{ total_autorizati }}</span>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center items-center">
+                <span class="text-gray-500 font-semibold uppercase text-xs tracking-wider">Total Evenimente Trafic</span>
+                <span class="block text-5xl font-extrabold text-gray-800 mt-2">{{ total_istoric }}</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
+                <h2 class="text-lg font-bold text-gray-800 mb-5 pb-2 border-b border-gray-100">Adaugă Autorizație</h2>
+                <form action="{{ url_for('admin_adauga') }}" method="POST" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Număr Înmatriculare</label>
+                        <input type="text" name="numar" required placeholder="EX: IS18ZAR" class="w-full bg-white border border-gray-300 rounded-md p-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Nume Proprietar</label>
+                        <input type="text" name="nume" required placeholder="Ex: Moisa Alexandru" class="w-full bg-white border border-gray-300 rounded-md p-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Dată Expirare</label>
+                        <input type="date" name="data_exp" required class="w-full bg-white border border-gray-300 rounded-md p-2.5 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    </div>
+                    <button type="submit" class="w-full bg-[#004b87] hover:bg-blue-800 text-white font-bold py-3 rounded-md transition shadow-sm mt-2">
+                        Salvează în Sistem
+                    </button>
+                </form>
+            </div>
+
+            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-lg font-bold text-gray-800 mb-5 pb-2 border-b border-gray-100">Autovehicule Autorizate</h2>
+                <div class="overflow-x-auto max-h-[350px] overflow-y-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider sticky top-0">
+                                <th class="p-3 font-semibold border-b border-gray-200">Număr</th>
+                                <th class="p-3 font-semibold border-b border-gray-200">Proprietar</th>
+                                <th class="p-3 font-semibold border-b border-gray-200">Expirare</th>
+                                <th class="p-3 font-semibold border-b border-gray-200 text-center">Acțiune</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 text-sm">
+                            {% for u in utilizatori %}
+                            {% set este_expirat = u['data_expirare'] < astazi %}
+                            <tr class="transition {% if este_expirat %} bg-red-50/40 hover:bg-red-100/50 {% else %} hover:bg-blue-50/50 {% endif %}">
+                                <td class="p-3 font-bold {% if este_expirat %} text-red-700 {% else %} text-gray-800 {% endif %}">
+                                    {{ u['numar'] }}
+                                </td>
+                                <td class="p-3 {% if este_expirat %} text-red-600/80 {% else %} text-gray-600 {% endif %}">
+                                    {{ u['nume_proprietar'] }}
+                                </td>
+                                <td class="p-3 flex items-center gap-2">
+                                    <span class="{% if este_expirat %} text-red-700 font-semibold {% else %} text-gray-600 {% endif %}">
+                                        {{ u['data_expirare'] }}
+                                    </span>
+                                    {% if este_expirat %}
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-200 text-red-800 uppercase tracking-wider">Expirat</span>
+                                    {% endif %}
+                                </td>
+                                <td class="p-3 text-center">
+                                    <form action="{{ url_for('admin_sterge', numar=u['numar']) }}" method="POST" onsubmit="return confirm('Ștergeți definitiv autorizația pentru {{ u['numar'] }}?');">
+                                        <button type="submit" class="text-red-500 hover:text-red-700 hover:underline font-medium text-xs">Șterge</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex justify-between items-center mb-5 pb-2 border-b border-gray-100">
+                <h2 class="text-lg font-bold text-gray-800">Istoric Trafic Live</h2>
+                <button onclick="window.location.reload();" class="text-xs bg-gray-100 border border-gray-300 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded transition font-medium">🔄 Actualizează</button>
+            </div>
+            <div class="overflow-x-auto max-h-[350px] overflow-y-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider sticky top-0">
+                            <th class="p-3 font-semibold border-b border-gray-200">Data / Ora</th>
+                            <th class="p-3 font-semibold border-b border-gray-200">Număr</th>
+                            <th class="p-3 font-semibold border-b border-gray-200">Eveniment</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-sm">
+                        {% for log in istoric %}
+                        <tr class="hover:bg-blue-50/50 transition">
+                            <td class="p-3 text-gray-500 text-xs">{{ log['data_ora'] }}</td>
+                            <td class="p-3 font-bold text-gray-800">{{ log['numar'] }}</td>
+                            <td class="p-3">
+                                <span class="px-2 py-1 rounded text-xs font-bold uppercase tracking-wider
+                                    {% if 'RESPINS' in log['actiune'] or 'EXPIRAT' in log['actiune'] %} bg-red-100 text-red-700
+                                    {% elif 'INTRARE' in log['actiune'] or 'IESIRE' in log['actiune'] %} bg-green-100 text-green-700
+                                    {% else %} bg-yellow-100 text-yellow-700 {% endif %}">
+                                    {{ log['actiune'] }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

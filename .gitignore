@@ -1,0 +1,19 @@
+# Medii virtuale și cache
+venv/
+__pycache__/
+*.pyc
+
+# Baze de date
+parcare.db
+
+# Fișiere media și resurse grele
+*.jpg
+*.mp4
+*.pt
+*.zip
+*.docx
+*.pptx
+
+# Scripturi locale (nu le vrem pe server)
+pornire.bat
+.env

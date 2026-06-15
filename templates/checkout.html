@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalii Abonament - Smart Parking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f0f2f5; min-height: 100vh; display: flex; align-items: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { border: none; border-radius: 1.5rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); }
+        .header-bg { background: #003d73; color: white; border-radius: 1.5rem 1rem 0 0; padding: 2rem; }
+        .status-badge { font-size: 1.1rem; font-weight: bold; padding: 1rem; border-radius: 0.75rem; background: #fff; margin-bottom: 1.5rem; border: 1px solid #e3e6ea; }
+        .list-group-item { border: 1px solid #ced4da; margin-bottom: 8px; border-radius: 0.5rem !important; transition: 0.2s; cursor: pointer; }
+        .list-group-item:hover { background-color: #f8f9fa; border-color: #003d73; }
+        .form-check-input:checked + .option-content { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card overflow-hidden">
+                    <div class="header-bg text-center">
+                        <h3 class="mb-0"><i class="fas fa-id-card me-2"></i>Portal Abonat Smart Parking</h3>
+                    </div>
+                    <div class="card-body p-4 text-center">
+                        
+                        <p class="text-muted mb-1 uppercase tracking-wider text-xs font-semibold">Proprietar Înregistrat</p>
+                        <h4 class="fw-bold text-secondary mb-3">{{ nume }}</h4>
+                        
+                        <p class="text-muted mb-1 text-xs">Număr Înmatriculare</p>
+                        <h1 class="display-4 fw-bold text-dark mb-4 tracking-wide font-mono">{{ numar }}</h1>
+                        
+                        <div class="status-badge {{ clasa }} d-flex align-items-center justify-content-center gap-2 shadow-sm">
+                            <i class="fas {% if 'VALID' in status or 'GRATUITE' in status %} fa-check-circle text-success {% else %} fa-exclamation-circle text-danger {% endif %}"></i>
+                            <span>{{ status }}</span>
+                        </div>
+
+                        {% if suma_plata is defined and suma_plata > 0 %}
+                        <hr class="my-4">
+                        <form action="/plateste" method="POST">
+                            <input type="hidden" name="numar" value="{{ numar }}">
+                            <div class="alert alert-warning text-center fs-5 border-0 rounded-3 shadow-sm mb-4">
+                                <i class="fas fa-coins me-2 text-warning"></i>Total de achitat: <strong class="text-danger">{{ suma_plata }} RON</strong>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-lg w-100 shadow-sm fw-bold p-3">
+                                <i class="fas fa-credit-card me-2"></i>Plătește și ieși (5 min valabilitate)
+                            </button>
+                        </form>
+
+                        {% elif suma_plata is defined and suma_plata == 0 %}
+                        <hr class="my-4">
+                        <div class="alert alert-success text-center border-0 rounded-3 shadow-sm p-4">
+                            <i class="fas fa-door-open fs-1 mb-2 text-success"></i><br>
+                            <span class="fs-5 fw-bold">Acces Permis!</span><br> Nu aveți costuri de achitat. Vă dorim drum bun!
+                        </div>
+
+                        {% else %}
+                        <hr class="my-4">
+                        
+                        <button class="btn btn-outline-primary btn-lg w-100 fw-bold p-3 mb-3 shadow-sm transition" 
+                                type="button" 
+                                data-bs-toggle="collapse" 
+                                data-bs-target="#zonaPrelungireCollapse" 
+                                aria-expanded="false" 
+                                aria-controls="zonaPrelungireCollapse">
+                            <i class="fas fa-calendar-plus me-2"></i>Prelungește Valabilitatea Abonamentului
+                        </button>
+
+                        <div class="collapse text-start mt-4" id="zonaPrelungireCollapse">
+                            <div class="card card-body bg-light border-0 p-4 rounded-3 shadow-inner">
+                                <h5 class="fw-bold text-dark mb-3"><i class="fas fa-sliders-h me-2 text-primary"></i>Alege perioada de reînnoire:</h5>
+                                
+                                <form action="/plateste" method="POST">
+                                    <input type="hidden" name="numar" value="{{ numar }}">
+                                    
+                                    <div class="list-group mb-4">
+                                        <label class="list-group-item d-flex justify-content-between align-items-center p-3 shadow-sm">
+                                            <div class="option-content">
+                                                <input class="form-check-input me-3" type="radio" name="luni" value="1" checked>
+                                                <span>1 Lună</span>
+                                            </div>
+                                            <span class="badge bg-primary rounded-pill px-3 py-2 fs-6">50 RON</span>
+                                        </label>
+                                        <label class="list-group-item d-flex justify-content-between align-items-center p-3 shadow-sm">
+                                            <div class="option-content">
+                                                <input class="form-check-input me-3" type="radio" name="luni" value="6">
+                                                <span>6 Luni</span>
+                                            </div>
+                                            <span class="badge bg-primary rounded-pill px-3 py-2 fs-6">250 RON</span>
+                                        </label>
+                                        <label class="list-group-item d-flex justify-content-between align-items-center p-3 shadow-sm">
+                                            <div class="option-content">
+                                                <input class="form-check-input me-3" type="radio" name="luni" value="12">
+                                                <span>12 Luni</span>
+                                            </div>
+                                            <span class="badge bg-primary rounded-pill px-3 py-2 fs-6">450 RON</span>
+                                        </label>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary btn-lg w-100 shadow-sm fw-bold p-3">
+                                        <i class="fas fa-check-circle me-2"></i>Confirmă Extinderea și Plătește
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="text-center mt-4 pt-2 border-top border-gray-100">
+                            <a href="/" class="text-muted text-decoration-none small hover:text-dark">
+                                <i class="fas fa-arrow-left me-1"></i> Înapoi la ecranul principal
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
