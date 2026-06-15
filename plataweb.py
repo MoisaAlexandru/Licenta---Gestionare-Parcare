@@ -27,10 +27,13 @@ def este_numar_valid_romanesc(numar):
 
 def preia_locuri_libere():
     CAPACITATE_MAXIMA = 50
-    conn, cur = get_db_cursor()
-    cur.execute("SELECT COUNT(*) FROM parcare_curenta")
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    # Am adăugat "AS total" pentru a avea o cheie clară
+    cur.execute("SELECT COUNT(*) as total FROM parcare_curenta")
     result = cur.fetchone()
-    ocupate = result[0] if result else 0
+    # Accesăm prin cheia 'total'
+    ocupate = result['total'] if result else 0
     cur.close()
     conn.close()
     return max(0, CAPACITATE_MAXIMA - ocupate)
@@ -127,13 +130,27 @@ def inregistrare_noua():
 # ==========================================
 @app.route('/admin')
 def admin_index():
-    conn, cur = get_db_cursor()
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
     cur.execute("SELECT numar, nume_proprietar, data_expirare FROM autorizati ORDER BY nume_proprietar ASC")
     utilizatori = cur.fetchall()
+    
     cur.execute("SELECT numar, actiune, data_ora FROM istoric ORDER BY data_ora DESC LIMIT 50")
     istoric = cur.fetchall()
+    
+    # Corecția pentru count-uri:
+    cur.execute("SELECT COUNT(*) as total FROM autorizati")
+    total_autorizati = cur.fetchone()['total']
+    
+    cur.execute("SELECT COUNT(*) as total FROM istoric")
+    total_istoric = cur.fetchone()['total']
+    
+    cur.close()
     conn.close()
-    return render_template('admin.html', utilizatori=utilizatori, istoric=istoric)
+    
+    return render_template('admin.html', utilizatori=utilizatori, istoric=istoric, 
+                           total_autorizati=total_autorizati, total_istoric=total_istoric)
 
 @app.route('/admin/adauga', methods=['POST'])
 def admin_adauga():
