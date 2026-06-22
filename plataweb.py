@@ -7,13 +7,13 @@ import re
 import math
 
 app = Flask(__name__)
-# Cheie secretă pentru sesiunea de admin
+
 app.secret_key = 'licenta2026_alexandru' 
 
 TARIF_ORA = 5
 
 def get_db_connection():
-    # Railway furnizează automat DATABASE_URL
+    
     return psycopg2.connect(os.environ.get('DATABASE_URL'))
 
 def get_db_cursor():
@@ -39,9 +39,7 @@ def preia_locuri_libere():
     except:
         return CAPACITATE_MAXIMA
 
-# ==========================================
-# RUTE CLIENT (Portal Public)
-# ==========================================
+
 @app.route('/')
 def index():
     return render_template('index.html', locuri_libere=preia_locuri_libere())
@@ -68,7 +66,6 @@ def verifica():
             nume_afisat = masina_abonament['nume_proprietar'] if masina_abonament else "Abonat"
             return render_template('checkout.html', numar=numar, nume=nume_afisat, status=status_text, clasa="text-success", suma_plata=0)
         else:
-            # E vizitator, calculăm orele
             ora_intrare = datetime.strptime(str(stare_parcare['ora_intrare']), '%Y-%m-%d %H:%M:%S')
             acum = datetime.now()
             diferenta = acum - ora_intrare
@@ -194,9 +191,6 @@ def inregistrare_noua():
         
     return render_template('index.html', mesaj=mesaj_succes, clasa=clasa_succes, locuri_libere=preia_locuri_libere())
 
-# ==========================================
-# RUTE ADMIN (Complet restaurate și securizate)
-# ==========================================
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     # Login check
@@ -207,7 +201,6 @@ def admin():
         else:
             return "Parolă incorectă! <a href='/admin'>Înapoi</a>"
             
-    # Dacă nu e logat, arată formularul curat
     if not session.get('admin_logged'):
         return '''
         <div style="display:flex; justify-content:center; align-items:center; height:100vh; background:#f4f7f6;">
@@ -219,17 +212,49 @@ def admin():
         </div>
         '''
 
-    # Dacă este logat, executăm logica completă pentru admin.html
     conn, cur = get_db_cursor()
+    
+    # 1. Preluăm abonații
     cur.execute("SELECT numar, nume_proprietar, data_expirare FROM autorizati ORDER BY nume_proprietar ASC")
     utilizatori = cur.fetchall()
     
+    # 2. Preluăm istoricul recent
     cur.execute("SELECT numar, actiune, data_ora FROM istoric ORDER BY data_ora DESC LIMIT 50")
     istoric = cur.fetchall()
     
+    # 3. Preluăm mașinile CURENTE din parcare și calculăm costurile
+    cur.execute("SELECT numar, ora_intrare, tip, status_plata FROM parcare_curenta ORDER BY ora_intrare DESC")
+    masini_parcare = cur.fetchall()
+    
+    parcare_live = []
+    acum = datetime.now()
+    
+    for masina in masini_parcare:
+        ora_intrare = datetime.strptime(str(masina['ora_intrare']), '%Y-%m-%d %H:%M:%S')
+        diferenta = acum - ora_intrare
+        minute_totale = int(diferenta.total_seconds() / 60)
+        ore = minute_totale // 60
+        minute = minute_totale % 60
+        timp_formatat = f"{ore}h {minute}m"
+        
+        cost_curent = 0
+        if masina['tip'] == 'VIZITATOR':
+            ore_state = math.ceil(diferenta.total_seconds() / 3600)
+            if ore_state == 0: ore_state = 1
+            cost_curent = ore_state * TARIF_ORA
+            
+        parcare_live.append({
+            'numar': masina['numar'],
+            'ora_intrare': masina['ora_intrare'],
+            'tip': masina['tip'],
+            'status_plata': masina['status_plata'],
+            'timp_petrecut': timp_formatat,
+            'cost_curent': cost_curent
+        })
+    
+    # Statistici rapide
     cur.execute("SELECT COUNT(*) as total FROM autorizati")
     total_autorizati = cur.fetchone()['total']
-    
     cur.execute("SELECT COUNT(*) as total FROM istoric")
     total_istoric = cur.fetchone()['total']
     conn.close()
@@ -240,6 +265,7 @@ def admin():
         'admin.html',
         utilizatori=utilizatori,
         istoric=istoric,
+        parcare_live=parcare_live,  # Am adăugat noua variabilă aici
         total_autorizati=total_autorizati,
         total_istoric=total_istoric,
         astazi=astazi
@@ -275,5 +301,4 @@ def admin_sterge(numar):
     return redirect(url_for('admin'))
 
 if __name__ == '__main__':
-    # Rulează pe 0.0.0.0 pentru a permite conexiuni externe
     app.run(host='0.0.0.0', port=5000, debug=True)
