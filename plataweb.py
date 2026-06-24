@@ -79,7 +79,8 @@ def verifica():
                 if acum <= limita:
                     return render_template('checkout.html', numar=numar, nume="Vizitator", status="Status: PLĂTIT. Aveți timp să părăsiți parcarea.", clasa="text-success", suma_plata=0)
 
-            status_text = f"Timp petrecut: {ore_state} ore. Tarif: {TARIF_ORA} RON/oră."
+            text_ore = "oră" if ore_state == 1 else "ore"
+            status_text = f"Timp petrecut: {ore_state} {text_ore}. Tarif: {TARIF_ORA} RON/oră."
             return render_template('checkout.html', numar=numar, nume="Vizitator", status=status_text, clasa="text-danger", suma_plata=suma_datorata)
 
     # CAZUL 2: MAȘINA NU E ÎN PARCARE, DAR ARE ABONAMENT
