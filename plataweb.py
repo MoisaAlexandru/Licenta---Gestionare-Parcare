@@ -195,7 +195,7 @@ def inregistrare_noua():
 def admin():
     # Login check
     if request.method == 'POST':
-        if request.form.get('password') == 'parola123': # PAROLA DE ADMIN AICI
+        if request.form.get('password') == 'parola123': 
             session['admin_logged'] = True
             return redirect(url_for('admin'))
         else:
